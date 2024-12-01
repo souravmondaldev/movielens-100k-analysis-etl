@@ -1,3 +1,5 @@
+--CREATE DATABASE airflow_bdt;
+--USE airflow_bdt;
 CREATE TABLE IF NOT EXISTS user_table (
     user_id INT PRIMARY KEY,
     age INT,

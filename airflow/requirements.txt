@@ -1,2 +1,4 @@
 psycopg2-binary
 pyspark
+apache-airflow>=2.5.0,<3.0.0
+apache-airflow-providers-apache-spark>=2.0.0,<3.0.0
