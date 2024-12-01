@@ -1,0 +1,96 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql  # Initialization script
+
+  airflow:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
+    container_name: airflow
+    environment:
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__WEBSERVER__RBAC=True
+      - AIRFLOW__WEBSERVER__WORKERS=4
+      - AIRFLOW__WEBSERVER__USER_ADMIN_USERNAME=airflow
+      - AIRFLOW__WEBSERVER__USER_ADMIN_PASSWORD=airflow
+    ports:
+      - "8080:8080"   # Airflow Web UI
+    depends_on:
+      - postgres
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./static_data:/app/static_data   # Mounting static data for Spark job
+      - airflow_logs:/opt/airflow/logs
+      - ./airflow/create_admin_user.sh:/opt/airflow/create_admin_user.sh
+    command: ["bash", "-c", "chmod +x /opt/airflow/create_admin_user.sh && /opt/airflow/create_admin_user.sh && airflow webserver"]
+
+  airflow_scheduler:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
+    container_name: airflow_scheduler
+    environment:
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+    depends_on:
+      - postgres
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - airflow_logs:/opt/airflow/logs
+    command: ["bash", "-c", "airflow db init && airflow scheduler"]
+
+  spark:
+    build:
+      context: ./spark
+      dockerfile: Dockerfile
+    container_name: spark
+    environment:
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_WORKER_CORES=1
+      - SPARK_MASTER=spark://spark:7077
+    ports:
+      - "4040:4040"
+      - "7077:7077"
+      - "8081:8081"
+    volumes:
+      - spark_logs:/opt/spark/logs
+      - ./static_data:/app/static_data   # Mounting static data for Spark job
+
+  spark_worker:
+    build:
+      context: ./spark
+      dockerfile: Dockerfile
+    container_name: spark_worker
+    environment:
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_WORKER_CORES=1
+      - SPARK_MASTER=spark://spark:7077
+    depends_on:
+      - spark
+
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    ports:
+      - "8082:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  airflow_logs:
+  spark_logs:
