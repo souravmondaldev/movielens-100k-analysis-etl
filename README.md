@@ -14,7 +14,7 @@ This project sets up a local development environment using Docker for running **
 ## Features
 - **TimeTable** - To handle schedule only during working days
 - **Data persist** - Stores the scraping data and apache spark job outputs inside postgres
-- **Admino** - Admino setup completed to view and query database
+- **Adminer** - Adminer setup completed to view and query database
 
 ## Prerequisites
 
