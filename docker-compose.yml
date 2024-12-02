@@ -1,0 +1,142 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+#    user: postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_volume_name:/var/lib/postgresql/data
+#      - ./postgres/init-database.sh:/docker-entrypoint-initdb.d/init-database.sh # Initialization script
+#    command: ["postgres", "-c", "hba_file=/etc/postgresql/pg_hba.conf"]
+    # networks:
+    #   - airflow-spark-network
+
+  spark:
+    build:
+      context: ./spark
+      dockerfile: Dockerfile
+    container_name: spark
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - DEPLOY_MODE=CLUSTER
+    ports:
+      - "8085:8085"
+      - "7077:7077"
+    command: "/opt/bitnami/spark/sbin/start-master.sh"
+    volumes:
+      - ./spark/app:/app
+
+  spark-worker:
+    build:
+      context: ./spark
+      dockerfile: Dockerfile
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - DEPLOY_MODE=CLUSTER
+    volumes:
+      - ./spark/app:/app
+    command: "/opt/bitnami/spark/sbin/start-worker.sh spark://spark:7077"
+    depends_on:
+      - spark
+    # networks:
+    #   - airflow-spark-network
+
+  airflow:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
+    container_name: airflow
+    environment:
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__WEBSERVER__RBAC=True
+      - AIRFLOW__WEBSERVER__WORKERS=4
+      - AIRFLOW__WEBSERVER__USER_ADMIN_USERNAME=airflow
+      - AIRFLOW__WEBSERVER__USER_ADMIN_PASSWORD=airflow
+      - SPARK_HOME=/home/airflow/.local/lib/python3.8/site-packages/pyspark
+      - PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.10.9-src.zip
+      - JAVA_HOME=/usr/lib/jvm/jdk8u292-b10
+      - AIRFLOW_CONN_POSTGRES_DEFAULT=postgresql://airflow:airflow@postgres:5432/airflow 
+      - AIRFLOW_CONN_SPARK_DEFAULT=spark://spark:7077   
+      # - PYSPARK_PYTHON=python3.8
+      # - PYSPARK_DRIVER_PYTHON=python3.8 
+      # - PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
+    ports:
+      - "8080:8080"   # Airflow Web UI
+    depends_on:
+      - postgres
+      - spark
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/dags/data:/data
+      - ./airflow/dags:/opt/airflow/dags
+      - airflow_logs:/opt/airflow/logs
+      - ./airflow/create_admin_user.sh:/opt/airflow/create_admin_user.sh
+      - ./airflow/setup_connections.sh:/opt/airflow/setup_connections.sh
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./spark/app:/app 
+    command: ["bash", "-c", "chmod +x /opt/airflow/create_admin_user.sh && /opt/airflow/create_admin_user.sh && chmod +x /opt/airflow/setup_connections.sh && /opt/airflow/setup_connections.sh && airflow webserver"]
+    # networks:
+    #   - airflow-spark-network
+
+  airflow_scheduler:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
+    container_name: airflow_scheduler
+    environment:
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - SPARK_HOME=/home/airflow/.local/lib/python3.8/site-packages/pyspark
+      - PYTHONPATH=${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.10.9-src.zip
+      - JAVA_HOME=/usr/lib/jvm/jdk8u292-b10
+      - AIRFLOW_CONN_POSTGRES_DEFAULT=postgresql://airflow:airflow@postgres:5432/airflow
+      # - PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
+    depends_on:
+      - postgres
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/setup_connections.sh:/opt/airflow/setup_connections.sh
+      - airflow_logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./spark/app:/app
+      - ./airflow/dags/data:/data
+    command: ["bash", "-c", "chmod +x /opt/airflow/setup_connections.sh && /opt/airflow/setup_connections.sh && airflow db init && airflow scheduler"]
+    # networks:
+    #   - airflow-spark-network
+
+
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    ports:
+      - "8082:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_volume_name:
+    name: postgres_volume_name
+  airflow_logs:
+  spark_logs:
+
+# networks:
+#   airflow-spark-network:
+#     name: airflow-spark-network
