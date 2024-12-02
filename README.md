@@ -144,6 +144,9 @@ Update `./airflow/requirements.txt
 
 ## Video Tutorial Placeholder
 🎥 **Walkthrough Video**
+
+https://github.com/user-attachments/assets/824f1c5e-62ca-40e4-b232-84f8a3219dca
+
 - A comprehensive video explaining: [HERE]
     - Environment setup
     - DAG creation
