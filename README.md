@@ -1,6 +1,6 @@
 # Airflow + Spark with PostgreSQL and Adminer
 
-This project sets up a local development environment using Docker for running **Apache Airflow**, **Apache Spark**, **PostgreSQL**, and **Adminer** for managing databases. It includes a Docker Compose configuration for orchestrating these services, along with initialization scripts to set up Airflow, PostgreSQL, and Airflow connections.
+This project sets up a local development environment using Docker to run Apache Airflow, Apache Spark, PostgreSQL, and Adminer for database management. It includes a Docker Compose configuration for orchestrating these services and initialization scripts to set up Airflow, PostgreSQL, and Airflow connections.
 
 ## Services
 
@@ -9,11 +9,11 @@ This project sets up a local development environment using Docker for running **
 - **Spark Worker**: Runs Spark worker nodes to process jobs.
 - **Airflow**: Runs the Airflow web server and scheduler.
 - **Adminer**: Provides a web-based interface for managing PostgreSQL.
-- **Airflow Plugin**: Custom resources created with airflow plugin
+- **Airflow Plugin**: Custom resources created with the airflow plugin
 
 ## Features
 - **TimeTable** - To handle schedule only during working days
-- **Data persist** - Stores the scraping data and apache spark job outputs inside postgres
+- **Data persist** - Stores the scraping data and Apache spark job outputs inside Postgres
 - **Adminer** - Adminer setup completed to view and query database
 
 ## Prerequisites
@@ -27,7 +27,7 @@ Before you begin, ensure you have the following installed on your local machine:
 
 ### 2. Build and Start the Docker Containers
 
-After you have cloned the repository, you need to build and start the containers that define the services in `docker-compose.yml`. Run the following command in your terminal from the root of the project directory:
+After you have cloned the repository, you must build and start the containers that define the services in `docker-compose.yml`. Run the following command in your terminal from the root of the project directory:
 
 ```bash
 docker-compose up --build
@@ -38,14 +38,6 @@ docker-compose up --build
 
 ## Overview
 This project sets up a comprehensive development environment using Docker Compose, integrating Apache Airflow, Apache Spark, PostgreSQL, and Adminer for database management.
-
-## Technologies Used
-- **Apache Airflow**: Workflow management platform
-- **Apache Spark**: Distributed data processing engine
-- **PostgreSQL**: Relational database
-- **Adminer**: Database management tool
-- **Docker**: Containerization platform
-
 
 
 
@@ -88,7 +80,7 @@ docker-compose up -d
 - **Username**: `airflow`
 - **Password**: `airflow`
 - **Database Name**: `airflow`
-- ![db_login_img](https://i.imgur.com/JgM01cr.png)
+-![db_login_img](https://i.imgur.com/JgM01cr.png)
 
 ### 3. Spark Master UI
 - **URL**: `http://localhost:7075`
@@ -97,7 +89,7 @@ docker-compose up -d
 ## DAG Development
 
 ### Location for DAG Scripts
-Place your Apache Airflow DAG scripts in:
+Place your Apache Airflow DAG scripts in the following:
 `./airflow/dags/`
 
 - **pipeline1 -**![imgae_pipeline_1](https://i.imgur.com/5ZV6Oq7.png)
@@ -147,7 +139,7 @@ Update `./airflow/requirements.txt
 
 https://github.com/user-attachments/assets/824f1c5e-62ca-40e4-b232-84f8a3219dca
 
-- A comprehensive video explaining: [HERE]
+- A comprehensive video explaining: 
     - Environment setup
     - DAG creation
     - Spark job execution
