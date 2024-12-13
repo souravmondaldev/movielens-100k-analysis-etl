@@ -127,7 +127,7 @@ Modify environment variables in `docker-compose.yml`:
 - Spark configurations
 
 ### Adding Python Dependencies
-Update `./airflow/requirements.txt
+Update `./airflow/requirements.txt`
 
 ## Resources Used
 - [Apache Airflow Documentation](https://airflow.apache.org/docs/)
